@@ -28,13 +28,14 @@ open class CodeGenerator(val file: File, val kotlinTypeMappings: Map<String, Str
 
     protected fun writeEnumType(type: File.Type.Enum) {
         // Enums are data classes w/ a single value and a companion object with known values
-        line().line("data class ${type.kotlinTypeName}(override val value: Int) : pbandk.Message.Enum {").indented {
+        line().line("enum class ${type.kotlinTypeName}(override val value: Int) : pbandk.Message.Enum {").indented {
+            type.values.forEach { line("${it.kotlinValueName}(${it.number}),") }
+            line("UNRECOGNIZED(-1);")
+            line()
             line("companion object : pbandk.Message.Enum.Companion<${type.kotlinTypeName}> {").indented {
-                type.values.forEach { line("val ${it.kotlinValueName} = ${type.kotlinTypeName}(${it.number})") }
-                line()
                 line("override fun fromValue(value: Int) = when (value) {").indented {
                     type.values.forEach { line("${it.number} -> ${it.kotlinValueName}") }
-                    line("else -> ${type.kotlinTypeName}(value)")
+                    line("else -> UNRECOGNIZED")
                 }.line("}")
             }.line("}")
         }.line("}")
